@@ -1,7 +1,9 @@
 {
   "name": "ur2mr-cli",
-  "bin": "./lib/cli.js",
-  "version": "0.0.1",
+  "bin": {
+    "ur2mr-cli": "lib/cli.js"
+  },
+  "version": "0.0.2",
   "description": "urlrewrite rule to mod_rewrite conversion tool",
   "main": "lib/index.js",
   "scripts": {
@@ -24,5 +26,17 @@
   "license": "MIT",
   "dependencies": {
     "xml2js": "^0.4.23"
-  }
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DScheglov/ur2mr-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DScheglov/ur2mr-cli/issues"
+  },
+  "homepage": "https://github.com/DScheglov/ur2mr-cli#readme"
 }
