@@ -1,0 +1,28 @@
+{
+  "name": "ur2mr-cli",
+  "bin": "./lib/cli.js",
+  "version": "0.0.1",
+  "description": "urlrewrite rule to mod_rewrite conversion tool",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [
+    "url",
+    "rewrite",
+    "rule",
+    "mod_rewrite",
+    "urlrewrite",
+    "cli",
+    "command",
+    "line",
+    "tool",
+    "convertor",
+    "conversion"
+  ],
+  "author": "Dmitry Scheglov <dmitry.scheglov@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "xml2js": "^0.4.23"
+  }
+}
