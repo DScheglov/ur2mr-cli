@@ -1,0 +1,356 @@
+
+
+<rules>
+	<clear />
+	<!-- Prism 7.x web updater doesn't work with https due to limitation with SetupBuilder -->
+	<rule name="No https redirect for autoupdates" stopProcessing="true">
+		<match url="^autoupdates/Prism7Win" />
+		<conditions logicalGrouping="MatchAll">
+			<!-- exception for autoupdates/prism7win/updates.cfm -->
+			<add input="{URL}" pattern=".*.cfm" negate="true" />
+		</conditions>
+		<action type="None" />
+	</rule>
+	<rule name="Redirect graphpad.com to www.graphpad.com" stopProcessing="true">
+		<match url=".*" />
+		<conditions>
+			<add input="{HTTP_HOST}" pattern="^graphpad.com$" />
+		</conditions>
+		<action type="Redirect" url="https://www.graphpad.com/{R:0}" redirectType="Permanent" />
+	</rule>
+	<rule name="Redirect secure.graphpad.com to www.graphpad.com" stopProcessing="true">
+		<match url=".*" />
+		<conditions>
+			<add input="{HTTP_HOST}" pattern="^secure.graphpad.com$" />
+			<add input="{REQUEST_METHOD}" matchType="Pattern" pattern="POST" ignoreCase="true" negate="true" />
+		</conditions>
+		<action type="Redirect" url="https://www.graphpad.com/{R:0}" redirectType="Permanent" />
+	</rule>
+	<rule name="HTTP to HTTPS redirect if www or secure" stopProcessing="true">
+		<match url="(.*)" />
+			<conditions>
+				<add input="{HTTP_X_FORWARDED_PROTO}" pattern="^http$" />
+				<add input="{HTTP_HOST}" pattern="^(www|secure).graphpad.com$" />
+			</conditions>
+		<action type="Redirect" redirectType="Permanent" url="https://{HTTP_HOST}/{R:1}" />
+	</rule>
+	<rule name="HTTP to HTTPS redirect if dev or staging" stopProcessing="true">
+			<match url="(.*)" />
+				<conditions>
+					<add input="{HTTPS}" pattern="off" />
+					<add input="{HTTP_HOST}" pattern="^(dev|staging|dev2).graphpad.com$" />
+				</conditions>
+			<action type="Redirect" redirectType="Permanent" url="https://{HTTP_HOST}/{R:1}" />
+	</rule>
+
+	<rule name="ReverseProxyToNextJsApp" stopProcessing="true">
+		<match url="^_next/(.*)" />
+		<conditions logicalGrouping="MatchAll" trackAllCaptures="false" />
+		<action type="Rewrite" url="https://nextjs-dev.graphpad.com/_next/{R:1}" logRewrittenUrl="true" />
+	</rule>
+	<rule name="ReverseProxyToNextJsAppInfo" stopProcessing="true">
+		<match url="^nextjsinfo$" />
+		<conditions logicalGrouping="MatchAll" trackAllCaptures="false" />
+		<action type="Rewrite" url="https://nextjs-dev.graphpad.com/nextjsinfo" logRewrittenUrl="true" />
+	</rule>
+	<rule name="ReverseProxyToNextJsAppSeries" stopProcessing="true">
+		<match url="^series-new/(.*)" />
+		<conditions logicalGrouping="MatchAll" trackAllCaptures="false" />
+		<action type="Rewrite" url="https://nextjs-dev.graphpad.com/series-new/{R:1}" logRewrittenUrl="true" />
+	</rule>
+	<rule name="ReverseProxyToNextJsAppInvoicePay" stopProcessing="true">
+		<match url="^invoice/pay$" />
+		<conditions logicalGrouping="MatchAll" trackAllCaptures="true">
+			<add input="{QUERY_STRING}" pattern="orderId=(.*)" />
+		</conditions>
+		<action type="Rewrite" url="https://nextjs-dev.graphpad.com/invoice/pay?orderId={C:1}" appendQueryString="false" logRewrittenUrl="true" />
+	</rule>
+	<rule name="ReverseProxyToNextJsAppInvoiceReceipt" stopProcessing="true">
+		<match url="^invoice/receipt" />
+		<conditions logicalGrouping="MatchAll" trackAllCaptures="true">
+			<add input="{QUERY_STRING}" pattern="orderId=(.*)" />
+		</conditions>
+		<action type="Rewrite" url="https://nextjs-dev.graphpad.com/invoice/receipt?orderId={C:1}" appendQueryString="false" logRewrittenUrl="true" />
+	</rule>
+	<rule name="ReverseProxyToNextJsAppInvoicePrint" stopProcessing="true">
+		<match url="^invoice/print" />
+		<conditions logicalGrouping="MatchAll" trackAllCaptures="true">
+			<add input="{QUERY_STRING}" pattern="orderId=(.*)" />
+		</conditions>
+		<action type="Rewrite" url="https://nextjs-dev.graphpad.com/invoice/print?orderId={C:1}" appendQueryString="false" logRewrittenUrl="true" />
+	</rule>
+
+	<rule name="Add trailing slash for 'local' with HTTP " stopProcessing="true">
+		<match url="^(www|company|support|scientific-software|data-analysis-resource-center|purchase|how-to-buy|careers|customers|search|search-beta|updates|linkservid|betatest|quickcalcs|ecommerce|demos|register|main|myaccount|login|prism-academy)$" />
+		<conditions logicalGrouping="MatchAll">
+			<add input="{HTTP_HOST}" pattern="^(local).graphpad.com$" />
+		</conditions>
+		<action type="Redirect" url="{R:1}/" redirectType="Permanent" />
+	</rule>
+	<rule name="Add trailing slash" stopProcessing="true">
+        <match url="^(www|company|support|scientific-software|data-analysis-resource-center|purchase|how-to-buy|careers|customers|search|search-beta|updates|linkservid|betatest|quickcalcs|ecommerce|demos|register|main|myaccount|login|prism-academy)$" />
+        <action type="Redirect" url="https://{HTTP_HOST}/{R:1}/" redirectType="Permanent" />
+    </rule>
+	<rule name="Redirect Rule" stopProcessing="true">
+		<match url=".*" />
+		<conditions>
+			<add input="{StaticRedirects:{REQUEST_URI}}" pattern="(.+)" />
+		</conditions>
+		<action type="Redirect" url="{C:1}" appendQueryString="False" redirectType="Permanent" />
+	</rule>
+	<rule name="redirect apps/index.cfm to standard urls" stopProcessing="true">
+		<match url="apps/index.cfm" />
+		<conditions logicalGrouping="MatchAll">
+			<add input="{REQUEST_METHOD}" pattern="POST" negate="true" />
+			<add input="{QUERY_STRING}" pattern="action=(ecommerce|register|demos|main|support|myaccount\:account).(.*)(&amp;)?(.*)?" />
+		</conditions>
+		<action type="Redirect" url="/main/handleRedirect/?section={C:1}&amp;item={C:2}&amp;{C:4}" appendQueryString="false" redirectType="Permanent" />
+	</rule>
+	<rule name="redirect apps/index.cfm/myaccount to standard urls" stopProcessing="true">
+		<match url="apps/index.cfm/myaccount\:account/(subscription|users)/subscriptionID/([0-9]+)" />
+		<conditions logicalGrouping="MatchAll">
+			<add input="{REQUEST_METHOD}" pattern="POST" negate="true" />
+		</conditions>
+		<action type="Redirect" url="/myaccount/{R:1}/subscriptionID/{R:2}" appendQueryString="false" redirectType="Permanent" />
+	</rule>
+	<rule name="redirect apps/index.cfm ecommerce|main|demos|register to standard urls" stopProcessing="true">
+		<match url="apps/index.cfm/(ecommerce|main|demos|register)(.*)" />
+		<conditions logicalGrouping="MatchAll">
+			<add input="{REQUEST_METHOD}" pattern="POST" negate="true" />
+		</conditions>
+		<action type="Redirect" url="/{R:1}{R:2}" appendQueryString="false" redirectType="Permanent" />
+	</rule>
+
+	<rule name="RewriteDownloadURL" stopProcessing="true">
+		<match url="^dl/([^/]+)/([^/]+)/?$" />
+		<conditions>
+			<add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+			<add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+		</conditions>
+		<action type="Rewrite" url="apps/index.cfm/ecommerce/download/?N={R:1}&amp;key={R:2}" />
+	</rule>
+	<rule name="RewriteReplaceFilesURL" stopProcessing="true">
+		<match url="^rf/([^/]+)/?$" />
+		<conditions>
+			<add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+			<add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+		</conditions>
+		<action type="Rewrite" url="apps/index.cfm/ecommerce/replacefiles/?code={R:1}" />
+	</rule>
+	<rule name="RewriteReceiptURL" stopProcessing="true">
+		<match url="^(receipt|quote)/([^/]+)/([^/]+)/?$" />
+		<conditions>
+			<add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+			<add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+		</conditions>
+		<action type="Rewrite" url="apps/index.cfm/ecommerce/invoice/?N={R:2}&amp;key={R:3}" />
+	</rule>
+	<rule name="RedirectCFAdministrator" stopProcessing="true">
+		<match url="cfide/administrator/" />
+		<action type="Redirect" url="http://www.graphpad.com/www/badlink.cfm" appendQueryString="false" redirectType="Permanent" />
+	</rule>
+	<rule name="JS.Version" stopProcessing="true">
+		<match url="^lib/gp/(.*)/(.+).js" />
+		<action type="Rewrite" url="/lib/gp/{R:2}.js" />
+	</rule>
+	<rule name="CSS.Version" stopProcessing="true">
+		<match url="^css/gp/(.*)/(.+).css" />
+		<action type="Rewrite" url="/css/gp/{R:2}.css" />
+	</rule>
+	<rule name="autoupdates/prism7win/updates">
+		<match url="^autoupdates/prism7win/updates.cfm" />
+		<action type="Rewrite" url="/apps/index.cfm/support/updates" />
+	</rule>
+	<rule name="betatest">
+		<match url="^betatest/(.*)?" />
+		<action type="Rewrite" url="/apps/index.cfm/betatest/{R:1}" />
+	</rule>
+	<rule name="how-to-buy">
+		<match url="^how-to-buy/(.*)?" />
+		<action type="Rewrite" url="/apps/index.cfm/how-to-buy/{R:1}" />
+	</rule>
+	<rule name="prism-academy">
+        <match url="^prism-academy/(.*)?" />
+        <action type="Rewrite" url="/apps/index.cfm/prism-academy/{R:1}" />
+    </rule>
+	<rule name="contact">
+		<match url="^contact/(.*)?" />
+		<action type="Rewrite" url="/apps/index.cfm/contact/{R:1}" />
+	</rule>
+	<rule name="demos.instatandstatmate">
+		<match url="^demos/(instat|statmate|contactForm|download)" />
+		<action type="Redirect" url="/demos/" redirectType="Permanent" />
+	</rule>
+	<rule name="demos.all">
+		<match url="^demos/(.*)?" />
+		<action type="Rewrite" url="/apps/index.cfm/demos/{R:1}" />
+	</rule>
+	<rule name="ecommerce.oneyearfree">
+		<match url="^ecommerce/oneyearfree/code/(.*)?" />
+		<action type="Rewrite" url="/apps/index.cfm/ecommerce/freeprism7/sourcecode/{R:1}" />
+	</rule>
+	<rule name="ecommerce.buyProductsNow">
+        <match url="^ecommerce/(buyProductsNow)" />
+        <action type="Redirect" url="/ecommerce/" redirectType="Permanent" />
+    </rule>
+	<rule name="ecommerce.buyLabLicense">
+		<match url="^ecommerce/buyLabLicense/(.*)?" />
+		<action type="Rewrite" url="/apps/index.cfm/ecommerce/addSubscription/{R:1}" />
+	</rule>
+	<rule name="ecommerce.upgradeTrial">
+		<match url="^ecommerce/upgradeTrial/(.*)?" />
+		<action type="Rewrite" url="/apps/index.cfm/ecommerce/renew/{R:1}" />
+	</rule>
+	<rule name="ecommerce.renew">
+		<match url="^ecommerce/renew/id/(.*)?" />
+		<action type="Rewrite" url="/apps/index.cfm/ecommerce/renew/subscriptionID/{R:1}" />
+	</rule>
+	<rule name="ecommerce.all">
+		<match url="^ecommerce/(.*)?" />
+		<action type="Rewrite" url="/apps/index.cfm/ecommerce/{R:1}" />
+	</rule>
+	<rule name="faq - friendly url" stopProcessing="true">
+		<match url="^support/faq/(.*)?" />
+		<conditions logicalGrouping="MatchAll" />
+		<action type="Rewrite" url="/apps/index.cfm?action=support.faq&amp;friendlyUrl={R:1}" appendQueryString="false" />
+	</rule>
+	<rule name="faqid">
+		<match url="^support/faqid/(.*)?" />
+		<conditions logicalGrouping="MatchAll">
+		<add input="{URL}" pattern=".*.(cfm|htm|html|css|js|jpg|jpeg|pdf|png|gif)" negate="true" />
+		</conditions>
+		<action type="Rewrite" url="/apps/index.cfm/?action=support.faq&amp;faqid={R:1}" />
+	</rule>
+	<rule name="Rewrite support/faqindex">
+		<match url="^support/faqindex/" />
+		<action type="Rewrite" url="/apps/index.cfm/?action=support.faqindex" />
+	</rule>
+	<rule name="main.all">
+		<match url="^main/(.*)?" />
+		<action type="Rewrite" url="/apps/index.cfm/main/{R:1}" />
+	</rule>
+	<rule name="myaccount.sign-out">
+		<match url="^myaccount/sign-out" />
+		<action type="Rewrite" url="/apps/index.cfm?action=myaccount:account.logout" />
+	</rule>
+    <rule name="new billing page, 'confirmcancel'" enabled="true" stopProcessing="true">
+        <match url="^myaccount/subscription/billing/confirmcancel/?(.*)?" />
+        <conditions logicalGrouping="MatchAll" />
+        <action type="Rewrite" url="/apps/index.cfm/myaccount:account/confirmcancel/{R:1}" />
+    </rule>
+    <rule name="new billing page, 'changeplan'" enabled="true" stopProcessing="true">
+        <match url="^myaccount/subscription/billing/changeplan/?(.*)?" />
+        <conditions logicalGrouping="MatchAll" />
+        <action type="Rewrite" url="/apps/index.cfm/myaccount:account/changeplan/{R:1}" />
+    </rule>
+    <rule name="new billing page, 'changepayment'" enabled="true" stopProcessing="true">
+        <match url="^myaccount/subscription/billing/changepayment/?(.*)?" />
+        <conditions logicalGrouping="MatchAll" />
+        <action type="Rewrite" url="/apps/index.cfm/myaccount:account/changepayment/{R:1}" />
+    </rule>
+    <rule name="new billing page, 'cancel'" enabled="true" stopProcessing="true">
+        <match url="^myaccount/subscription/billing/cancel/?(.*)?" />
+        <conditions logicalGrouping="MatchAll" />
+        <action type="Rewrite" url="/apps/index.cfm/myaccount:account/cancel/{R:1}" />
+    </rule>
+    <rule name="new billing page, 'reactivate'" enabled="true" stopProcessing="true">
+        <match url="^myaccount/subscription/billing/reactivate/?(.*)?" />
+        <conditions logicalGrouping="MatchAll" />
+        <action type="Rewrite" url="/apps/index.cfm/myaccount:account/reactivate/{R:1}" />
+    </rule>
+    <rule name="new billing page, 'activations'" enabled="true" stopProcessing="true">
+        <match url="^myaccount/subscription/billing/activations/?(.*)?" />
+        <conditions logicalGrouping="MatchAll" />
+        <action type="Rewrite" url="/apps/index.cfm/myaccount:account/purchase/{R:1}" />
+    </rule>
+    <rule name="new billing page, 'main'" enabled="true" stopProcessing="true">
+        <match url="^myaccount/subscription/billing/?(.*)?" />
+        <conditions logicalGrouping="MatchAll" />
+        <action type="Rewrite" url="/apps/index.cfm/myaccount:account/billing/{R:1}" />
+    </rule>
+	<rule name="myaccount id parsing">
+		<match url="^myaccount/([a-zA-Z]+)/id/([0-9]+)" />
+		<action type="Redirect" url="/myaccount/{R:1}/?subscriptionID={R:2}" appendQueryString="false" redirectType="Permanent" />
+	</rule>
+	<rule name="myaccount.all">
+		<match url="^myaccount/(.*)?" />
+		<action type="Rewrite" url="/apps/index.cfm/myaccount:account/{R:1}" />
+	</rule>
+	<rule name="quickcalcs">
+		<match url="^quickcalcs/([A-Za-z_0-9]+)/*" />
+		<conditions logicalGrouping="MatchAll" />
+		<action type="Rewrite" url="apps/index.cfm?action=quickcalcs.{R:1}" />
+	</rule>
+	<rule name="quickcalcs-index">
+		<match url="^quickcalcs/" />
+		<conditions logicalGrouping="MatchAll" />
+		<action type="Rewrite" url="apps/index.cfm?action=quickcalcs.index" />
+	</rule>
+	<rule name="register.all">
+		<match url="^register/(.*)?" />
+		<action type="Rewrite" url="/apps/index.cfm/register/{R:1}" />
+	</rule>
+	<rule name="Rewrite fusebox urls to apps2">
+		<match url="^index.cfm?[cmd|fuseaction]" />
+		<action type="Rewrite" url="/apps2/index.cfm" />
+	</rule>
+	<rule name="Prism 5 Help" enabled="true" stopProcessing="true">
+		<match url="^help/Prism5/Prism5Help.html?(.*)?" />
+		<conditions logicalGrouping="MatchAny">
+				<add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+		</conditions>
+		<action type="Redirect" url="/guides/prism/5/user-guide/prism5help.html{R:1}" />
+	</rule>
+	<rule name="Pass through admin" stopProcessing="true">
+		<match url="^www/(admin|plugins|tasks)" />
+		<conditions logicalGrouping="MatchAll" />
+		<action type="None" />
+	</rule>
+	<rule name="Remove subdir" enabled="true" stopProcessing="true">
+		<match url="^(www|company|support|scientific-software|data-analysis-resource-center|purchase|how-to-buy|careers|customers|search|series|search-beta|updates|linkservid)/?(.*)?" />
+		<conditions logicalGrouping="MatchAny">
+				<add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+		</conditions>
+		<action type="Rewrite" url="/www/index.cfm/{R:0}" />
+	</rule>
+	<rule name="go">
+		<match url="^go/(.*)/" />
+		<conditions logicalGrouping="MatchAll" />
+		<action type="Rewrite" url="apps/index.cfm?action=main.go&amp;goto={R:1}" />
+	</rule>
+	<rule name="go without slash">
+        <match url="^go/(.*)" />
+        <conditions logicalGrouping="MatchAll" />
+        <action type="Rewrite" url="apps/index.cfm?action=main.go&amp;goto={R:1}" />
+    </rule>
+	<rule name="RewriteRootIndexCfm">
+		<match url="^$" />
+		<action type="Rewrite" url="/www/index.cfm" />
+	</rule>
+	<rule name="Redirect faq/faq_index.cfm" stopProcessing="true">
+		<match url="^faq/faq_index.cfm" />
+		<action type="Redirect" url="/support/faqindex/" appendQueryString="false" redirectType="Permanent" />
+	</rule>
+
+    <rule name="api get order data" enabled="true" stopProcessing="true">
+        <match url="api/order/(.*)?" />
+        <action type="Rewrite" url="/api/index.cfm/order/?orderNumber={R:1}" />
+    </rule>
+	<rule name="api recurly webhooks" enabled="true" stopProcessing="true">
+    	<match url="^api/webhook/?$" />
+    	<conditions logicalGrouping="MatchAny">
+    		<add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+    	</conditions>
+    	<action type="Rewrite" url="/api/index.cfm/webhook/" />
+    </rule>
+	<rule name="api" enabled="true" stopProcessing="true">
+    	<match url="^api/?(.*)?" />
+    	<conditions logicalGrouping="MatchAny">
+    		<add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+    	</conditions>
+    	<action type="Rewrite" url="/api/index.cfm/{R:1}" />
+    </rule>
+
+
+
+</rules>
